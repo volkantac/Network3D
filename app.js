@@ -95,7 +95,7 @@ requestCsv(DATA_URL, (error, response) => {
 			  mapStyle="mapbox://styles/mapbox/dark-v9"
 		  	onViewportChange={this._onViewportChange.bind(this)}
 			  mapboxApiAccessToken={MAPBOX_TOKEN}>
-		  	<DeckGLOverlay viewport={viewport} data={COMdata || []} />
+		  	<DeckGLOverlay viewport={viewport} data={data || []} />
 		    </MapGL>
 
 		  </div>
