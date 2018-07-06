@@ -1,6 +1,9 @@
 /* global window */
 import React, {Component} from 'react';
 import DeckGL, {HexagonLayer} from 'deck.gl';
+import MapGL from 'react-map-gl';
+import DeckGLOverlay from './deckgl-overlay.js';
+import TimeSelector from './slider.js';
 
 const LIGHT_SETTINGS = {
   lightsPosition: [-0.144528, 49.739968, 8000, -3.807751, 54.104682, 8000],
@@ -10,7 +13,7 @@ const LIGHT_SETTINGS = {
   lightsStrength: [0.8, 0.0, 0.8, 0.0],
   numberOfLights: 2
 };
-
+const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-lineQza253cG5obTF3dGQifQ.g0QD2OpmfdZMOEBLTKX0-Q
 const colorRange = [
   [1, 152, 189],
   [73, 227, 206],
@@ -21,13 +24,15 @@ const colorRange = [
 ];
 
 //  {min: 1, max: 50}
-const elevationScale = {min: 1, max: 50};
+const elevationScale = {min: 1, max: 35};
 
 const defaultProps = {
-  radius: 700,
+  radius: 300,
   upperPercentile: 100,
-  coverage: 0.6
+  coverage: 0.3
 };
+
+const getPosition = data => [data[0], data[1]]
 
 export default class DeckGLOverlay extends Component {
   static get defaultColorRange() {
@@ -36,9 +41,9 @@ export default class DeckGLOverlay extends Component {
 
   static get defaultViewport() {
     return {
-      longitude: 35.432777,
-      latitude: 38.095086,
-      zoom: 5.7,
+      longitude: 29.032777,
+      latitude: 41.005086,
+      zoom: 9,
       minZoom: 2,
       maxZoom: 15,
       pitch: 45.5,
@@ -51,7 +56,12 @@ export default class DeckGLOverlay extends Component {
     this.startAnimationTimer = null;
     this.intervalTimer = null;
     this.state = {
-      elevationScale: elevationScale.min
+      elevationScale: elevationScale.min,
+      viewport: {
+        ...DeckGLOverlay.defaultViewport,
+        width: 500,
+        height: 500
+      },
     };
 
     this._startAnimate = this._startAnimate.bind(this);
@@ -59,7 +69,9 @@ export default class DeckGLOverlay extends Component {
   }
 
   componentDidMount() {
+    window.addEventListener('resize', this._resize.bind(this));
     this._animate();
+    this._resize() 
   }
 
   componentWillReceiveProps(nextProps) {
@@ -68,19 +80,30 @@ export default class DeckGLOverlay extends Component {
     }
   }
 
+  compomenentDidUpdate(prevProps) {
+ 
+  }
+
   componentWillUnmount() {
     this._stopAnimate();
+  }
+
+  _resize() {
+    this._onViewportChange({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
   }
 
   _animate() {
     this._stopAnimate();
 
     // wait 1.5 secs to start animation so that all data are loaded
-    this.startAnimationTimer = window.setTimeout(this._startAnimate, 1500);
+    this.startAnimationTimer = window.setTimeout(this._startAnimate, 2000);
   }
 
   _startAnimate() {
-    this.intervalTimer = window.setInterval(this._animateHeight, 50);
+    this.intervalTimer = window.setInterval(this._animateHeight, 75);
   }
 
   _stopAnimate() {
@@ -96,43 +119,65 @@ export default class DeckGLOverlay extends Component {
     }
   }
   
-  
- getElevationValue(d) {
-        return d.length;
+
+ getElevationValue(d) { 
+  const totalHeight = d.reduce((acc, curr) => acc + parseFloat(curr[2]), 0)
+  const avg = parseFloat(totalHeight / d.length)
+  return avg
     }
 
+  _onViewportChange(viewport) {
+      this.setState({
+        viewport: {...this.state.viewport, ...viewport}
+      });
+    }
+  
+
   render() {
-    const {viewport, data, radius, coverage, upperPercentile} = this.props;
-	
+    const {data, radius, coverage, upperPercentile, extruded} = this.props;
+    console.info('deck render')
     if (!data) {
       return null;
     }
-
-  //
-
     const layers = [
       new HexagonLayer({
         id: 'heatmap',
         colorRange,
         coverage,
         data,
-        elevationRange: [0, 5000],
+        elevationRange: [0, 3000],
         elevationScale: this.state.elevationScale,
-        extruded: true,
-        getPosition: d => d,
-		    getElevationValue: this.getElevationValue,
+        extruded,
+        getPosition,
+        getElevationValue: this.getElevationValue,
+        getColorValue: this.getElevationValue,
         lightSettings: LIGHT_SETTINGS,
-        onHover: this.props.onHover,
-        opacity: 0.20,
-        pickable: Boolean(this.props.onHover),
+        //onHover: ({object}) => setTooltip(`${object.centroid.join(', ')}\nCount: ${object.points.length}`), //this.props.onHover,
+        opacity: 0.10,
+        //pickable: Boolean(this.props.onHover),
         radius,
         upperPercentile,
-        pickable:true,
+        pickable:false,
         //
       })
     ];
-
-    return <DeckGL {...viewport} layers={layers} />;
+    //function hourCheck(data) {
+    //  return data.hour === this.hour;
+    //  }
+    // 
+    //  var filteredData = data.filter(hourCheck);
+    
+    return  (
+    <MapGL
+        {...this.state.viewport}
+        mapStyle="mapbox://styles/mapbox/dark-v9"
+        onViewportChange={this._onViewportChange.bind(this)}
+        mapboxApiAccessToken={MAPBOX_TOKEN}
+      >
+      <DeckGL {...this.state.viewport} layers={layers} />
+    </MapGL>
+    )
+   
   }
 }
 

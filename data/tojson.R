@@ -2,9 +2,12 @@ library("rjson")
 
 getwd()
 setwd("C:/Users/VOLTAC/Desktop/DEMO/3d-heatmap/data")
-a=read.csv("baseIn.csv")
+a=read.csv(file= "hourlyData.csv",header = TRUE, sep=";")
+write.csv(a,"hourlyIST.csv", row.names = FALSE)
+
 
 a=a[,-1]
+
 
 View(a)
 a$site_sector_id=as.character(a$site_sector_id)

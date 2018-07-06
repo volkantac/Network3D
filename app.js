@@ -9,17 +9,9 @@ import TimeSelector from './slider.js';
 import {csv as requestCsv} from 'd3-request';
 
 // Set your mapbox token here
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
-const COMdata = [{"hgt": 39.770358, "coords": [40.992166999999995, 21624.06065]}, 
-                  {"hgt": 28.95, "coords": [40.209858000000004, 23016.62272]}, 
-                  {"hgt": 26.946469, "coords": [39.586553, 6409.472186]}, 
-                  {"hgt": 38.389119, "coords": [40.916769, 10641.01734]}];
-// export MapboxAccessToken=pk.eyJ1IjoidGFjdm9sa2FuIiwiYSI6ImNqaWJvczBmaTBkenQza253cG5obTF3dGQifQ.g0QD2OpmfdZMOEBLTKX0-Q
+const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-lineQza253cG5obTF3dGQifQ.g0QD2OpmfdZMOEBLTKX0-Q
 
-// Source data CSV
-const DATA_URL = "./data/baseIn.csv"; // eslint-disable-line
-
-class Root extends Component {
+ class Root extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -30,37 +22,28 @@ class Root extends Component {
       },
       data: null,
       settings: {
-        hour: 1
+        hour: 12,
+        extruded: false,
       }
     };
 
-
-
-// [Number(d.lng), Number(d.lat)]
-// [Number(d.lng), Number(d.lat), Number(d.length)]
-
-requestCsv(DATA_URL, (error, response) => {
+    const DATA_URL = "./data/COORdata.csv";
+  requestCsv(DATA_URL, (error, response) => {
   if (!error) {
-    console.log('response', response)
-    const data = response.map(d => [Number(d.lng), Number(d.lat), Number(d.length)]);
-    console.log('data', data[0]);
-    console.log('COMdata', COMdata);
+    //console.log('response', response)
+    const data = response.map(d => [Number(d.lng), Number(d.lat), Number(d.hgt), Number(d.hour), String(d.sector), String(d.district)]);
+    //console.log('data', data);
     this.setState({data});
   }
 });
-  }
+
+}
 
   componentDidMount() {
-    window.addEventListener('resize', this._resize.bind(this));
-    this._resize();
+ 
   }
 
-  _resize() {
-    this._onViewportChange({
-      width: window.innerWidth,
-      height: window.innerHeight
-    });
-  }
+ 
 
   _onViewportChange(viewport) {
     this.setState({
@@ -70,34 +53,37 @@ requestCsv(DATA_URL, (error, response) => {
 
   _updateSettings(settings) {
     this.setState({
-      settings: {...this.state.settings, ...settings}
+      settings: {...this.state.settings, ...settings},
     });
-
-      
   }
 
+  updateExtruded(){ 
+    const newSettings = {...this.state.settings, extruded: !this.state.settings.extruded}
+    // console.info('newSettings :: ', newSettings)
+      this.setState({
+      settings: {...this.state.settings, extruded: !this.state.settings.extruded}
+    })
+  }
+    
   render() {
-    const {viewport, data, settings} = this.state;
-
+    const {data, settings} = this.state;
+    const {extruded} = settings
+    const filteredData = (this.state.data || []).filter(entry => entry[3] === parseInt(settings.hour, 10))
+    console.info('app render')
     return (
 
       <div>
         <div id="control-panel"> 
-		    <div style={{textAlign: 'center', padding: '5px 0 5px'}}>
-              <h1>Control Panel</h1>
-			  <hr />
+		    <div style={{textAlign: 'center', padding: '1px 0 1px'}}>
+          <h3>Control Panel</h3>
+	
 			  <TimeSelector settings={settings} onChange={(e) => this._updateSettings(e)}/>
-			  
-		    </div>  
-          </div>
-		    <MapGL
-		  	{...viewport}
-			  mapStyle="mapbox://styles/mapbox/dark-v9"
-		  	onViewportChange={this._onViewportChange.bind(this)}
-			  mapboxApiAccessToken={MAPBOX_TOKEN}>
-		  	<DeckGLOverlay viewport={viewport} data={data || []} />
-		    </MapGL>
+        <input onChange={this.updateExtruded.bind(this)} type="checkbox" name="extruded"/>
 
+
+        </div>  
+        </div>
+        <DeckGLOverlay data={filteredData || []} extruded={extruded} />
 		  </div>
 
     );
