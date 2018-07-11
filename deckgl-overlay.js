@@ -4,6 +4,8 @@ import DeckGL, {HexagonLayer} from 'deck.gl';
 import MapGL from 'react-map-gl';
 import DeckGLOverlay from './deckgl-overlay.js';
 import TimeSelector from './slider.js';
+//import styles from './style.css';
+
 
 const LIGHT_SETTINGS = {
   lightsPosition: [-0.144528, 49.739968, 8000, -3.807751, 54.104682, 8000],
@@ -13,7 +15,10 @@ const LIGHT_SETTINGS = {
   lightsStrength: [0.8, 0.0, 0.8, 0.0],
   numberOfLights: 2
 };
-const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-lineQza253cG5obTF3dGQifQ.g0QD2OpmfdZMOEBLTKX0-Q
+
+const MAPBOX_TOKEN = 'pk.eyJ1IjoidGFjdm9sa2FuIiwiYSI6ImNqaWJvczBmaTBkenQza253cG5obTF3dGQifQ.g0QD2OpmfdZMOEBLTKX0-Q';
+//process.env.MapboxAccessToken; //comment//eslint-disable-lineQza253cG5obTF3dGQifQ.g0QD2OpmfdZMOEBLTKX0-Q
+
 const colorRange = [
   [1, 152, 189],
   [73, 227, 206],
@@ -24,12 +29,12 @@ const colorRange = [
 ];
 
 //  {min: 1, max: 50}
-const elevationScale = {min: 1, max: 35};
+const elevationScale = {min: 1, max: 24};
 
 const defaultProps = {
-  radius: 300,
+  radius: 500,
   upperPercentile: 100,
-  coverage: 0.3
+  coverage: 0.6
 };
 
 const getPosition = data => [data[0], data[1]]
@@ -41,13 +46,13 @@ export default class DeckGLOverlay extends Component {
 
   static get defaultViewport() {
     return {
-      longitude: 29.032777,
-      latitude: 41.005086,
-      zoom: 9,
+      longitude: 28.832777,
+      latitude: 41.145086,
+      zoom: 8.5,
       minZoom: 2,
       maxZoom: 15,
       pitch: 45.5,
-      bearing: -1.396674584323023
+      bearing: -12.396674584323023
     };
   }
   
@@ -80,9 +85,7 @@ export default class DeckGLOverlay extends Component {
     }
   }
 
-  compomenentDidUpdate(prevProps) {
- 
-  }
+  compomenentDidUpdate(prevProps) {}
 
   componentWillUnmount() {
     this._stopAnimate();
@@ -97,7 +100,6 @@ export default class DeckGLOverlay extends Component {
 
   _animate() {
     this._stopAnimate();
-
     // wait 1.5 secs to start animation so that all data are loaded
     this.startAnimationTimer = window.setTimeout(this._startAnimate, 2000);
   }
@@ -120,17 +122,17 @@ export default class DeckGLOverlay extends Component {
   }
   
 
- getElevationValue(d) { 
+  getElevationValue(d) { 
   const totalHeight = d.reduce((acc, curr) => acc + parseFloat(curr[2]), 0)
   const avg = parseFloat(totalHeight / d.length)
   return avg
-    }
+  }
 
   _onViewportChange(viewport) {
       this.setState({
         viewport: {...this.state.viewport, ...viewport}
       });
-    }
+  }
   
 
   render() {
@@ -161,11 +163,7 @@ export default class DeckGLOverlay extends Component {
         //
       })
     ];
-    //function hourCheck(data) {
-    //  return data.hour === this.hour;
-    //  }
-    // 
-    //  var filteredData = data.filter(hourCheck);
+
     
     return  (
     <MapGL
